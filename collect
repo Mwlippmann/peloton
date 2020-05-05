@@ -48,6 +48,8 @@ for workout in workouts:
     filtered_workouts.append(filtered_workout)
 insert_workouts(filtered_workouts)
 
+# here we get all the workout ids from the database,
+# these will be used to get all the rides and stuff.
 workout_ids = get_workoutids(my_id)
     
 for workout_id in workout_ids:
