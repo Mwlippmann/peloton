@@ -68,7 +68,6 @@ user_filter = {
 workout_filter = {
     "items": [
         "device_type",
-        "end_time",
         "fitbit_id",
         "fitness_discipline",
         "has_leaderboard_metrics",
@@ -78,6 +77,9 @@ workout_filter = {
         "metrics_type",
         "name",
         "peloton_id",
+        "total_leaderboard_users",
+        "leaderboard_rank",
+        "device_type_display_name",
         "platform",
         "status",
         "strava_id",
@@ -89,6 +91,7 @@ workout_filter = {
     ],
     "dates": [
         "created",
+        "end_time",
         "created_at",
         "device_time_created_at",
         "start_time",

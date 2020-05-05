@@ -65,6 +65,7 @@ def create_database(data=None):
         Column('created_at', DateTime()),
         Column('device_time_created_at', DateTime()),
         Column('device_type', String(255)),
+        Column('device_type_display_name', String(255)),
         Column('end_time', DateTime()),
         Column('fitbit_id', String(255)),
         Column('fitness_discipline', String(255)),
@@ -72,6 +73,7 @@ def create_database(data=None):
         Column('has_pedaling_metrics', Boolean()),
         Column('id', String(255), primary_key=True),
         Column('is_total_work_personal_record', Boolean()),
+        Column('leaderboard_rank', Integer()),
         Column('metrics_type', String(255)),
         Column('name', String(255)),
         Column('peloton_id', String(255)),
@@ -81,10 +83,61 @@ def create_database(data=None):
         Column('strava_id', String(255)),
         Column('timezone', String(255)),
         Column('title', String(255)),
+        Column('total_leaderboard_users', Integer()),
         Column('total_work', Float()),
         Column('user_id', String(255), ForeignKey("user.id"), nullable=False),
         Column('workout_type', String(255)),
-)
+    )
+    ride = Table('ride', metadata,
+        Column('content_format', String(255)),
+        Column('content_provider', String(255)),
+        Column('description', String(255)),
+        Column('difficulty_estimate', Float()),
+        Column('difficulty_level', Float()),
+        Column('difficulty_rating_avg', Float()),
+        Column('difficulty_rating_count', Integer()),
+        Column('duration', Integer()),
+        Column('fitness_discipline', String(255)),
+        Column('fitness_discipline_display_name', String(255)),
+        Column('has_closed_captions', Boolean()),
+        Column('has_free_mode', Boolean()),
+        Column('has_pedaling_metrics', Boolean()),
+        Column('home_peloton_id', String(255)),
+        Column('id', String(255), primary_key=True),
+        Column('workout_id', String(255), ForeignKey("workout.id"), nullable=False),
+        Column('image_url', String(255)),
+        Column('instructor_id', String(255)),
+        Column('is_archived', Boolean()),
+        Column('is_closed_caption_shown', Boolean()),
+        Column('is_explicit', Boolean()),
+        Column('is_live_in_studio_only', Boolean()),
+        Column('language', String(255)),
+        Column('length', Integer()),
+        Column('live_stream_id', String(255)),
+        Column('live_stream_url', String(255)),
+        Column('location', String(255)),
+        Column('origin_locale', String(255)),
+        Column('original_air_time', DateTime()),
+        Column('overall_estimate', Float()),
+        Column('overall_rating_avg', Float()),
+        Column('overall_rating_count', Integer()),
+        Column('pedaling_duration', Integer()),
+        Column('pedaling_end_offset', Integer()),
+        Column('pedaling_start_offset', Integer()),
+        Column('rating', Integer()),
+        Column('ride_type_id', String(255)),
+        Column('sample_vod_stream_url', String(255)),
+        Column('scheduled_start_time', DateTime()),
+        Column('series_id', String(255)),
+        Column('sold_out', Boolean()),
+        Column('studio_peloton_id', String(255)),
+        Column('title', String(255)),
+        Column('total_in_progress_workouts', Integer()),
+        Column('total_ratings', Integer()),
+        Column('total_workouts', Integer()),
+        Column('vod_stream_id', String(255)),
+        Column('vod_stream_url', String(255)),
+    )
     connection = engine.connect()
     metadata.create_all(engine)
 
@@ -130,5 +183,39 @@ def get_user_id():
         else:
             return False
 
-def count_workouts(user_id):
-    pass
+def insert_workouts(values_list):
+    workout_count = len(values_list)
+    user_id = values_list[0]['user_id']
+    engine = create_engine('sqlite:///data/pelotondb.sqlite')
+    connection = engine.connect()
+    metadata = MetaData()
+    workout = Table('workout', metadata, autoload=True, autoload_with=engine)
+    stmt = select([workout]).where(workout.columns.user_id == user_id)
+    result = connection.execute(stmt).fetchall()
+    if len(result) == workout_count:
+        print('All workouts are already in the database')
+    else:
+        stmt = insert(workout)
+        result_proxy = connection.execute(stmt, values_list)
+
+def get_workoutids(user_id):
+    engine = create_engine('sqlite:///data/pelotondb.sqlite')
+    connection = engine.connect()
+    metadata = MetaData()
+    workout = Table('workout', metadata, autoload=True, autoload_with=engine)
+    workout_ids = []
+    stmt = select([workout]).where(workout.columns.user_id == user_id)
+    results = connection.execute(stmt).fetchall()
+    for result in results:
+        workout_ids.append(result.id)
+    return(workout_ids)
+
+def update_workout(values_list):
+    workout_id = values_list['id']
+    engine = create_engine('sqlite:///data/pelotondb.sqlite')
+    connection = engine.connect()
+    metadata = MetaData()
+    workout = Table('workout', metadata, autoload=True, autoload_with=engine)
+    update_stmt = update(workout).values(**values_list)
+    update_stmt = update_stmt.where(workout.columns.id == workout_id)
+    update_results = connection.execute(update_stmt)
