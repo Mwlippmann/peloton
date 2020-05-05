@@ -6,6 +6,11 @@ from datetime import datetime
 from pelotondatabase import insert_user,get_user_id
 from filter_tables import filter_data, user_filter
 
+#making sure the relevant environment variables are set.
+if 'USER' not in os.environ or 'PELOTONPASS' not in os.environ:
+    print('you need to set the USER and PELOTONPASS environment variables')
+    exit()
+
 # first we log into the peloton api site and create an HTTPS session.
 api_url = 'https://api.onepeloton.com/api/'
 s = requests.Session()
@@ -15,8 +20,6 @@ s.post('https://api.onepeloton.com/auth/login', json=payload)
 # We check if the userid is already in the database. 
 # If it's not, we collect it. 
 if not get_user_id():
-    # user_dict is the dictionary we will use to populate the
-    # user table in the database.
     # We create the api url and pull from it.
     my_api = 'me'
     my_info = s.get(api_url + my_api)
@@ -24,21 +27,25 @@ if not get_user_id():
     # We use the filter to filter out rows we don't yet have columns
     # for in the database.
     # Also, we make sure the date numbers are converted to datetime objects.
-    user_dict = user_filter(userdata, user_filter)
+    user_dict = filter_data(userdata, user_filter)
     # we add an entry for the user entry that's actually you so it's easy to filter.
     user_dict['is_me'] = True
     # We insert it all into the database and get the user_id back.
     # the insert_user will create the database and everything if needed.
     my_id = insert_user(user_dict)
 else: 
-    # If it is in the database, we get it and move on.
+    # If it is in the database, we get the userid and move on.
     my_id = get_user_id()
 
 # With the user id, we can collect ride information.
 data = s.get(api_url + 'user/' + my_id + '/workouts?limit=2000')
 parsed = json.loads(data.content.decode('UTF-8'))
 workouts = parsed['data']
-# we compare the 
+# we compare the count of workouts with the count of entries in the database.
+# If it's the same, we already have everything in the db, and can move on.
+workout_count = len(workouts)
+print(workout_count)
+
 exit()
 
 workout_ids = []

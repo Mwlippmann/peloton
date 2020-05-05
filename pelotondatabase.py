@@ -130,4 +130,5 @@ def get_user_id():
         else:
             return False
 
-def 
+def count_workouts(user_id):
+    pass
