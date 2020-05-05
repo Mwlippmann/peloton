@@ -1,3 +1,14 @@
+
+def filter_data(input_data,input_filter):
+    output = {}
+    for item,value in input_data.items():
+        if item in input_filter['items']:
+            output[item] = value
+        elif item in input_filter['dates']:
+            output[item] =  datetime.utcfromtimestamp(value)
+    return(output)
+
+
 user_filter = {
     "items": [
         "birthday",
@@ -53,3 +64,32 @@ user_filter = {
     "dates": ["created_at"]
 }
 
+workout_filter = {
+    "items": [
+        "device_type",
+        "end_time",
+        "fitbit_id",
+        "fitness_discipline",
+        "has_leaderboard_metrics",
+        "has_pedaling_metrics",
+        "id",
+        "is_total_work_personal_record",
+        "metrics_type",
+        "name",
+        "peloton_id",
+        "platform",
+        "status",
+        "strava_id",
+        "timezone",
+        "title",
+        "total_work",
+        "user_id",
+        "workout_type",
+    ],
+    "dates": [
+        "created",
+        "created_at",
+        "device_time_created_at",
+        "start_time",
+    ],
+}

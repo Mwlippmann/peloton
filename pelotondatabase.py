@@ -35,6 +35,7 @@ def create_database(data=None):
         Column('instructor_id', String(255)),
         Column('is_complete_profile', Boolean()),
         Column('is_demo', Boolean()),
+        Column('is_me', Boolean()),
         Column('is_external_beta_tester', Boolean()),
         Column('is_fitbit_authenticated', Boolean()),
         Column('is_internal_beta_tester', Boolean()),
@@ -90,6 +91,7 @@ def create_database(data=None):
 def insert_user(data):
     engine = create_engine('sqlite:///data/pelotondb.sqlite')
     table_names = inspect(engine).get_table_names()
+    user_id = data['id']
     #first we check if the table exists
     if 'user' not in table_names:
         create_database()
@@ -98,7 +100,6 @@ def insert_user(data):
         connection = engine.connect()
         metadata = MetaData()
         user = Table('user', metadata, autoload=True, autoload_with=engine)
-        user_id = data['id']
         stmt = select([user]).where(user.columns.id == user_id)
         result = connection.execute(stmt).fetchall()
         if len(result)>0:
@@ -106,4 +107,27 @@ def insert_user(data):
         else:
             stmt = insert(user).values(**data)
             result_proxy = connection.execute(stmt)
+    return(user_id)
 
+'''
+This function returns the user id of the 'is_me' user.
+If it does not exist, it returns False.
+'''
+def get_user_id():
+    engine = create_engine('sqlite:///data/pelotondb.sqlite')
+    table_names = inspect(engine).get_table_names()
+    if 'user' not in table_names:
+        return(False)
+    else:
+        connection = engine.connect()
+        metadata = MetaData()
+        user = Table('user', metadata, autoload=True, autoload_with=engine)
+        stmt = select([user]).where(user.columns.is_me == True)
+        result = connection.execute(stmt).fetchall()
+        if len(result)>0:
+            user_id = result[0].id
+            return(user_id)
+        else:
+            return False
+
+def 
