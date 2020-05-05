@@ -219,3 +219,19 @@ def update_workout(values_list):
     update_stmt = update(workout).values(**values_list)
     update_stmt = update_stmt.where(workout.columns.id == workout_id)
     update_results = connection.execute(update_stmt)
+
+def upsert_rides(values_list):
+    engine = create_engine('sqlite:///data/pelotondb.sqlite')
+    metadata = MetaData()
+    connection = engine.connect()
+    ride = Table('ride', metadata, autoload=True, autoload_with=engine)
+    for ride_data in values_list:
+        ride_id = ride_data['id']
+        stmt = select([ride]).where(ride.columns.id == ride_id)
+        result = connection.execute(stmt).fetchall()
+        if len(result) == 1:
+            stmt = update(ride).values(**values_list)
+            stmt = update_stmt.where(ride.columns.id == ride_id)
+        elif len(result) == 0:
+            stmt = insert(user).values(**data)
+        results = connection.execute(stmt)

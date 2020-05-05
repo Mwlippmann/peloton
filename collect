@@ -3,7 +3,7 @@ import os
 import requests
 import json
 from datetime import datetime
-from pelotondatabase import insert_user,get_user_id,insert_workouts,get_workoutids
+from pelotondatabase import *
 from filter_tables import filter_data, user_filter, workout_filter
 
 #making sure the relevant environment variables are set.
@@ -55,30 +55,11 @@ workout_ids = get_workoutids(my_id)
 for workout_id in workout_ids:
     full_workout = s.get(api_url + 'workout/' + workout_id)
     parsed = json.loads(full_workout.content.decode('UTF-8'))
+    rides = []
     if 'ride' in parsed:
         ride = parsed.pop('ride')
-        print(json.dumps(ride,indent=2,sort_keys=True))
+        ride['workout_id'] = parsed['id']
     filtered_workout = filter_data(parsed, workout_filter)
-    #update_workout(filtered_workout,ride)
+    update_workout(filtered_workout)
+    upsert_rides(rides)
 
-exit()
-print(json.dumps(all_workouts,indent=2,sort_keys=True))
-
-durations = []
-for workout in all_workouts:
-    ride = workout['ride']
-    duration = ride['duration']
-    durations.append(duration)
-    title = ride['title']
-    name = workout['name']
-    total_work = workout['total_work']
-    start_time = workout['start_time']
-    start_time = datetime.utcfromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S')
-    if 'original_air_time' in ride:
-     original_air_time = ride['original_air_time']
-     original_air_time = datetime.utcfromtimestamp(original_air_time).strftime('%Y-%m-%d %H:%M:%S')
-    else:
-     original_air_time = ''
-    print(start_time, name, duration, total_work, title, original_air_time)
-
-print(set(durations))
