@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
-
+from prettytable import PrettyTable
 from pelotondatabase import get_ride_output,get_user_id
 
+x = PrettyTable()
+x.field_names = ['start time','name','duration','total work','title','original air time']
+
 for ride in get_ride_output(get_user_id):
-    print(ride)
+    x.add_row(ride)
+
+print(x)
