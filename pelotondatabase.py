@@ -237,14 +237,15 @@ def get_ride_output(user_id):
         rides.columns.duration, workouts.columns.total_work,
         rides.columns.title, rides.columns.original_air_time
     ]
-    #columns = [ workouts.columns.name ]
     stmt = select(columns)
-    stmt = stmt.select_from(workouts.join(rides))
+    stmt = stmt.select_from(workouts.join(rides)).order_by(asc(workouts.columns.total_work)).order_by(asc(rides.columns.duration))
     results = connection.execute(stmt).fetchall()
     output = []
     for result in results:
         item_list = list(result)
         item_list[0] = result[0].strftime("%A, %d %b %Y")
+        item_list[2] = '%s minutes' % str(round(result[2]/60))
+        item_list[3] = '%s kj' % str(round(result[3]/1000))
         if len(item_list)==6 and item_list[5] is not None:
             item_list[5] = result[5].strftime("%A, %d %b %Y")
         output.append(item_list)
