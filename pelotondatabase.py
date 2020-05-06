@@ -243,11 +243,11 @@ def get_ride_output(user_id):
     output = []
     for result in results:
         item_list = list(result)
-        item_list[0] = result[0].strftime("%A, %d %b %Y")
+        item_list[0] = result[0].strftime("%b %d %Y, %H:%M")
         item_list[2] = '%s minutes' % str(round(result[2]/60))
         item_list[3] = '%s kj' % str(round(result[3]/1000))
         if len(item_list)==6 and item_list[5] is not None:
-            item_list[5] = result[5].strftime("%A, %d %b %Y")
+            item_list[5] = result[5].strftime("%b %d %Y, %H:%M")
         output.append(item_list)
     return(output)
 
