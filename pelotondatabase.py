@@ -1,10 +1,10 @@
 from sqlalchemy import *
 
 metadata = MetaData()
+engine = create_engine('sqlite:///data/pelotondb.sqlite')
 
 def create_database(data=None):
     # Creates or opens a file called mydb with a SQLite3 DB
-    engine = create_engine('sqlite:///data/pelotondb.sqlite')
     user = Table(
         'user',
         metadata,
@@ -92,8 +92,8 @@ def create_database(data=None):
         Column('content_format', String(255)),
         Column('content_provider', String(255)),
         Column('description', String(255)),
-        Column('difficulty_estimate', Float()),
-        Column('difficulty_level', Float()),
+        Column('difficulty_estimate', String(255)),
+        Column('difficulty_level', String(255)),
         Column('difficulty_rating_avg', Float()),
         Column('difficulty_rating_count', Integer()),
         Column('duration', Integer()),
@@ -142,7 +142,6 @@ def create_database(data=None):
     metadata.create_all(engine)
 
 def insert_user(data):
-    engine = create_engine('sqlite:///data/pelotondb.sqlite')
     table_names = inspect(engine).get_table_names()
     user_id = data['id']
     #first we check if the table exists
@@ -151,7 +150,6 @@ def insert_user(data):
     else:
         #we check if a user with the id already exists
         connection = engine.connect()
-        metadata = MetaData()
         user = Table('user', metadata, autoload=True, autoload_with=engine)
         stmt = select([user]).where(user.columns.id == user_id)
         result = connection.execute(stmt).fetchall()
@@ -167,13 +165,11 @@ This function returns the user id of the 'is_me' user.
 If it does not exist, it returns False.
 '''
 def get_user_id():
-    engine = create_engine('sqlite:///data/pelotondb.sqlite')
     table_names = inspect(engine).get_table_names()
     if 'user' not in table_names:
         return(False)
     else:
         connection = engine.connect()
-        metadata = MetaData()
         user = Table('user', metadata, autoload=True, autoload_with=engine)
         stmt = select([user]).where(user.columns.is_me == True)
         result = connection.execute(stmt).fetchall()
@@ -186,9 +182,7 @@ def get_user_id():
 def insert_workouts(values_list):
     workout_count = len(values_list)
     user_id = values_list[0]['user_id']
-    engine = create_engine('sqlite:///data/pelotondb.sqlite')
     connection = engine.connect()
-    metadata = MetaData()
     workout = Table('workout', metadata, autoload=True, autoload_with=engine)
     stmt = select([workout]).where(workout.columns.user_id == user_id)
     result = connection.execute(stmt).fetchall()
@@ -198,10 +192,9 @@ def insert_workouts(values_list):
         stmt = insert(workout)
         result_proxy = connection.execute(stmt, values_list)
 
+
 def get_workoutids(user_id):
-    engine = create_engine('sqlite:///data/pelotondb.sqlite')
     connection = engine.connect()
-    metadata = MetaData()
     workout = Table('workout', metadata, autoload=True, autoload_with=engine)
     workout_ids = []
     stmt = select([workout]).where(workout.columns.user_id == user_id)
@@ -210,19 +203,17 @@ def get_workoutids(user_id):
         workout_ids.append(result.id)
     return(workout_ids)
 
+
 def update_workout(values_list):
     workout_id = values_list['id']
-    engine = create_engine('sqlite:///data/pelotondb.sqlite')
     connection = engine.connect()
-    metadata = MetaData()
     workout = Table('workout', metadata, autoload=True, autoload_with=engine)
     update_stmt = update(workout).values(**values_list)
     update_stmt = update_stmt.where(workout.columns.id == workout_id)
     update_results = connection.execute(update_stmt)
 
+
 def upsert_rides(values_list):
-    engine = create_engine('sqlite:///data/pelotondb.sqlite')
-    metadata = MetaData()
     connection = engine.connect()
     ride = Table('ride', metadata, autoload=True, autoload_with=engine)
     for ride_data in values_list:
@@ -230,8 +221,32 @@ def upsert_rides(values_list):
         stmt = select([ride]).where(ride.columns.id == ride_id)
         result = connection.execute(stmt).fetchall()
         if len(result) == 1:
-            stmt = update(ride).values(**values_list)
-            stmt = update_stmt.where(ride.columns.id == ride_id)
+            stmt = update(ride).values(**ride_data)
+            stmt = stmt.where(ride.columns.id == ride_id)
         elif len(result) == 0:
-            stmt = insert(user).values(**data)
+            stmt = insert(ride).values(**ride_data)
         results = connection.execute(stmt)
+
+
+def get_ride_output(user_id):
+    connection = engine.connect()
+    workouts = Table('workout', metadata, autoload=True, autoload_with=engine)
+    rides = Table('ride', metadata, autoload=True, autoload_with=engine)
+    columns = [
+        workouts.columns.start_time, workouts.columns.name,
+        rides.columns.duration, workouts.columns.total_work,
+        rides.columns.title, rides.columns.original_air_time
+    ]
+    #columns = [ workouts.columns.name ]
+    stmt = select(columns)
+    stmt = stmt.select_from(workouts.join(rides))
+    results = connection.execute(stmt).fetchall()
+    output = []
+    for result in results:
+        item_list = list(result)
+        item_list[0] = result[0].strftime("%A, %d %b %Y")
+        if len(item_list)==6 and item_list[5] is not None:
+            item_list[5] = result[5].strftime("%A, %d %b %Y")
+        output.append(item_list)
+    return(output)
+

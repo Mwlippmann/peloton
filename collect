@@ -4,7 +4,7 @@ import requests
 import json
 from datetime import datetime
 from pelotondatabase import *
-from filter_tables import filter_data, user_filter, workout_filter
+from filter_tables import *
 
 #making sure the relevant environment variables are set.
 if 'USER' not in os.environ or 'PELOTONPASS' not in os.environ:
@@ -55,10 +55,13 @@ workout_ids = get_workoutids(my_id)
 for workout_id in workout_ids:
     full_workout = s.get(api_url + 'workout/' + workout_id)
     parsed = json.loads(full_workout.content.decode('UTF-8'))
+    #  print(json.dumps(parsed,indent=2,sort_keys=True))
     rides = []
     if 'ride' in parsed:
         ride = parsed.pop('ride')
         ride['workout_id'] = parsed['id']
+        filtered_ride = filter_data(ride, ride_filter)
+        rides.append(filtered_ride)
     filtered_workout = filter_data(parsed, workout_filter)
     update_workout(filtered_workout)
     upsert_rides(rides)

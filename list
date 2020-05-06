@@ -1,21 +1,6 @@
 #!/usr/bin/env python3
 
-durations = []
-for workout in all_workouts:
-    ride = workout['ride']
-    duration = ride['duration']
-    durations.append(duration)
-    title = ride['title']
-    name = workout['name']
-    total_work = workout['total_work']
-    start_time = workout['start_time']
-    start_time = datetime.utcfromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S')
-    if 'original_air_time' in ride:
-     original_air_time = ride['original_air_time']
-     original_air_time = datetime.utcfromtimestamp(original_air_time).strftime('%Y-%m-%d %H:%M:%S')
-    else:
-     original_air_time = ''
-    print(start_time, name, duration, total_work, title, original_air_time)
+from pelotondatabase import get_ride_output,get_user_id
 
-print(set(durations))
-
+for ride in get_ride_output(get_user_id):
+    print(ride)
