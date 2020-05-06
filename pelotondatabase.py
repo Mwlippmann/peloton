@@ -88,6 +88,19 @@ def create_database(data=None):
         Column('user_id', String(255), ForeignKey("user.id"), nullable=False),
         Column('workout_type', String(255)),
     )
+    following = Table('following', metadata,
+        Column('authed_user_follows', Boolean()),
+        Column('category', String(255)),
+        Column('id', String(255), primary_key=True),
+        Column('image_url', String(255)),
+        Column('is_profile_private', Boolean()),
+        Column('location', String(255)),
+        Column('total_followers', Integer()),
+        Column('total_following', Integer()),
+        Column('total_workouts', Integer()),
+        Column('user_id', String(255), ForeignKey("user.id"), nullable=False),
+        Column('username', String(255)),
+    )
     ride = Table('ride', metadata,
         Column('content_format', String(255)),
         Column('content_provider', String(255)),
@@ -160,11 +173,12 @@ def insert_user(data):
             result_proxy = connection.execute(stmt)
     return(user_id)
 
-'''
-This function returns the user id of the 'is_me' user.
-If it does not exist, it returns False.
-'''
+
 def get_user_id():
+    '''
+    This function returns the user id of the 'is_me' user.
+    If it does not exist, it returns False.
+    '''
     table_names = inspect(engine).get_table_names()
     if 'user' not in table_names:
         return(False)
@@ -179,6 +193,7 @@ def get_user_id():
         else:
             return False
 
+
 def insert_workouts(values_list):
     workout_count = len(values_list)
     user_id = values_list[0]['user_id']
@@ -190,6 +205,20 @@ def insert_workouts(values_list):
         print('All workouts are already in the database')
     else:
         stmt = insert(workout)
+        result_proxy = connection.execute(stmt, values_list)
+
+
+def insert_following(values_list):
+    following_count = len(values_list)
+    user_id = values_list[0]['user_id']
+    connection = engine.connect()
+    following = Table('following', metadata, autoload=True, autoload_with=engine)
+    stmt = select([following]).where(following.columns.user_id == user_id)
+    result = connection.execute(stmt).fetchall()
+    if len(result) == following_count:
+        print('All followed are already in the database')
+    else:
+        stmt = insert(following)
         result_proxy = connection.execute(stmt, values_list)
 
 
@@ -228,6 +257,17 @@ def upsert_rides(values_list):
         results = connection.execute(stmt)
 
 
+def get_following(user_id):
+    connection = engine.connect()
+    following_data = []
+    following = Table('following', metadata, autoload=True, autoload_with=engine)
+    stmt = select([following]).where(following.columns.user_id == user_id)
+    results = connection.execute(stmt).fetchall()
+    for result in results:
+        following_data.append([result.username, result.id])
+    return(following_data)
+
+
 def get_ride_output(user_id):
     connection = engine.connect()
     workouts = Table('workout', metadata, autoload=True, autoload_with=engine)
@@ -243,11 +283,13 @@ def get_ride_output(user_id):
     output = []
     for result in results:
         item_list = list(result)
-        item_list[0] = result[0].strftime("%b %d %Y, %H:%M")
+        #item_list[0] = result[0].strftime("%b %d %Y, %H:%M")
+        item_list[0] = result[0].strftime("%b %d %Y")
         item_list[2] = '%s minutes' % str(round(result[2]/60))
         item_list[3] = '%s kj' % str(round(result[3]/1000))
         if len(item_list)==6 and item_list[5] is not None:
-            item_list[5] = result[5].strftime("%b %d %Y, %H:%M")
+            #item_list[5] = result[5].strftime("%b %d %Y, %H:%M")
+            item_list[5] = result[5].strftime("%b %d %Y")
         output.append(item_list)
     return(output)
 

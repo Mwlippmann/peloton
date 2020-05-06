@@ -37,6 +37,7 @@ else:
     # If it is in the database, we get the userid and move on.
     my_id = get_user_id()
 
+
 # With the user id, we can collect ride information.
 data = s.get(api_url + 'user/' + my_id + '/workouts?limit=2000')
 parsed = json.loads(data.content.decode('UTF-8'))
@@ -47,6 +48,23 @@ for workout in workouts:
     filtered_workout = filter_data(workout, workout_filter)
     filtered_workouts.append(filtered_workout)
 insert_workouts(filtered_workouts)
+
+# With the user id, we can collect information about who we are following.
+first_data = s.get(api_url + 'user/' + my_id + '/following')
+parsed = json.loads(first_data.content.decode('UTF-8'))
+following = parsed['data']
+page_count = parsed['page_count']
+if page_count > 1:
+    for i in range(1,page_count):
+        data = s.get(api_url + 'user/' + my_id + '/following?page=' + str(i))
+        parsed = json.loads(data.content.decode('UTF-8'))
+        following.extend(parsed['data'])
+filtered_followed = []
+for followed in following:
+    filtered_following = filter_data(followed, following_filter)
+    filtered_following['user_id'] = my_id
+    filtered_followed.append(filtered_following)
+insert_following(filtered_followed)
 
 # here we get all the workout ids from the database,
 # these will be used to get all the rides and stuff.

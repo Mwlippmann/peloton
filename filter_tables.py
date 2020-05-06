@@ -151,3 +151,19 @@ ride_filter = {
         "original_air_time",
     ],
 }
+following_filter = {
+    "items": [
+        "authed_user_follows",
+        "category",
+        "id",
+        "image_url",
+        "is_profile_private",
+        "location",
+        "total_followers",
+        "total_following",
+        "total_workouts",
+        "username",
+    ],
+    "dates": [ ]
+}
+
