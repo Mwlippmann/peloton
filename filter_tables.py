@@ -1,13 +1,14 @@
 from datetime import datetime
 
-def filter_data(input_data,input_filter):
+
+def filter_data(input_data, input_filter):
     output = {}
-    for item,value in input_data.items():
+    for item, value in input_data.items():
         if item in input_filter['items']:
             output[item] = value
         elif item in input_filter['dates']:
-            output[item] =  datetime.utcfromtimestamp(value)
-    return(output)
+            output[item] = datetime.utcfromtimestamp(value)
+    return (output)
 
 
 user_filter = {
@@ -164,6 +165,5 @@ following_filter = {
         "total_workouts",
         "username",
     ],
-    "dates": [ ]
+    "dates": []
 }
-
