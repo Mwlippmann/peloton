@@ -19,7 +19,7 @@ s.post('https://api.onepeloton.com/auth/login', json=payload)
 
 # We check if the userid is already in the database. 
 # If it's not, we collect it. 
-if not get_user_id():
+if not get_my_user_id():
     # We create the api url and pull from it.
     my_api = 'me'
     my_info = s.get(api_url + my_api)
@@ -35,7 +35,7 @@ if not get_user_id():
     my_id = insert_user(user_dict)
 else: 
     # If it is in the database, we get the userid and move on.
-    my_id = get_user_id()
+    my_id = get_my_user_id()
 
 
 # With the user id, we can collect ride information.
@@ -47,7 +47,7 @@ filtered_workouts = []
 for workout in workouts:
     filtered_workout = filter_data(workout, workout_filter)
     filtered_workouts.append(filtered_workout)
-insert_workouts(filtered_workouts)
+upsert(filtered_workouts,'workout')
 
 # With the user id, we can collect information about who we are following.
 first_data = s.get(api_url + 'user/' + my_id + '/following')
@@ -64,7 +64,7 @@ for followed in following:
     filtered_following = filter_data(followed, following_filter)
     filtered_following['user_id'] = my_id
     filtered_followed.append(filtered_following)
-insert_following(filtered_followed)
+upsert(filtered_followed,'following')
 
 # here we get all the workout ids from the database,
 # these will be used to get all the rides and stuff.
@@ -73,7 +73,6 @@ workout_ids = get_workoutids(my_id)
 for workout_id in workout_ids:
     full_workout = s.get(api_url + 'workout/' + workout_id)
     parsed = json.loads(full_workout.content.decode('UTF-8'))
-    #  print(json.dumps(parsed,indent=2,sort_keys=True))
     rides = []
     if 'ride' in parsed:
         ride = parsed.pop('ride')
@@ -81,6 +80,6 @@ for workout_id in workout_ids:
         filtered_ride = filter_data(ride, ride_filter)
         rides.append(filtered_ride)
     filtered_workout = filter_data(parsed, workout_filter)
-    update_workout(filtered_workout)
-    upsert_rides(rides)
+    upsert([filtered_workout],'workout')
+    upsert(rides,'ride')
 

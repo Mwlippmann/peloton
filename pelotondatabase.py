@@ -171,21 +171,20 @@ def insert_user(data):
     #first we check if the table exists
     if 'user' not in table_names:
         create_database()
+    #we check if a user with the id already exists
+    connection = engine.connect()
+    user = Table('user', metadata, autoload=True, autoload_with=engine)
+    stmt = select([user]).where(user.columns.id == user_id)
+    result = connection.execute(stmt).fetchall()
+    if len(result) > 0:
+        print('User with id %s already exists in the database.' % user_id)
     else:
-        #we check if a user with the id already exists
-        connection = engine.connect()
-        user = Table('user', metadata, autoload=True, autoload_with=engine)
-        stmt = select([user]).where(user.columns.id == user_id)
-        result = connection.execute(stmt).fetchall()
-        if len(result) > 0:
-            print('User with id %s already exists in the database.' % user_id)
-        else:
-            stmt = insert(user).values(**data)
-            result_proxy = connection.execute(stmt)
+        stmt = insert(user).values(**data)
+        result_proxy = connection.execute(stmt)
     return (user_id)
 
 
-def get_user_id():
+def get_my_user_id():
     '''
     This function returns the user id of the 'is_me' user.
     If it does not exist, it returns False.
@@ -205,37 +204,6 @@ def get_user_id():
             return False
 
 
-def insert_workouts(values_list):
-    workout_count = len(values_list)
-    user_id = values_list[0]['user_id']
-    connection = engine.connect()
-    workout = Table('workout', metadata, autoload=True, autoload_with=engine)
-    stmt = select([workout]).where(workout.columns.user_id == user_id)
-    result = connection.execute(stmt).fetchall()
-    if len(result) == workout_count:
-        print('All workouts are already in the database')
-    else:
-        stmt = insert(workout)
-        result_proxy = connection.execute(stmt, values_list)
-
-
-def insert_following(values_list):
-    following_count = len(values_list)
-    user_id = values_list[0]['user_id']
-    connection = engine.connect()
-    following = Table('following',
-                      metadata,
-                      autoload=True,
-                      autoload_with=engine)
-    stmt = select([following]).where(following.columns.user_id == user_id)
-    result = connection.execute(stmt).fetchall()
-    if len(result) == following_count:
-        print('All followed are already in the database')
-    else:
-        stmt = insert(following)
-        result_proxy = connection.execute(stmt, values_list)
-
-
 def get_workoutids(user_id):
     connection = engine.connect()
     workout = Table('workout', metadata, autoload=True, autoload_with=engine)
@@ -247,27 +215,18 @@ def get_workoutids(user_id):
     return (workout_ids)
 
 
-def update_workout(values_list):
-    workout_id = values_list['id']
+def upsert(values_list,table):
     connection = engine.connect()
-    workout = Table('workout', metadata, autoload=True, autoload_with=engine)
-    update_stmt = update(workout).values(**values_list)
-    update_stmt = update_stmt.where(workout.columns.id == workout_id)
-    update_results = connection.execute(update_stmt)
-
-
-def upsert_rides(values_list):
-    connection = engine.connect()
-    ride = Table('ride', metadata, autoload=True, autoload_with=engine)
-    for ride_data in values_list:
-        ride_id = ride_data['id']
-        stmt = select([ride]).where(ride.columns.id == ride_id)
+    loaded_table = Table(table, metadata, autoload=True, autoload_with=engine)
+    for data in values_list:
+        line_id = data['id']
+        stmt = select([loaded_table]). where(loaded_table.columns.id == line_id)
         result = connection.execute(stmt).fetchall()
         if len(result) == 1:
-            stmt = update(ride).values(**ride_data)
-            stmt = stmt.where(ride.columns.id == ride_id)
+            stmt = update(loaded_table).values(**data)
+            stmt = stmt.where(loaded_table.columns.id == line_id)
         elif len(result) == 0:
-            stmt = insert(ride).values(**ride_data)
+            stmt = insert(loaded_table).values(**data)
         results = connection.execute(stmt)
 
 
@@ -298,15 +257,4 @@ def get_ride_output(user_id):
     stmt = stmt.select_from(workouts.join(rides)).order_by(
         asc(workouts.columns.total_work)).order_by(asc(rides.columns.duration))
     results = connection.execute(stmt).fetchall()
-    output = []
-    for result in results:
-        item_list = list(result)
-        #item_list[0] = result[0].strftime("%b %d %Y, %H:%M")
-        item_list[0] = result[0].strftime("%b %d %Y")
-        item_list[2] = '%s minutes' % str(round(result[2] / 60))
-        item_list[3] = '%s kj' % str(round(result[3] / 1000))
-        if len(item_list) == 6 and item_list[5] is not None:
-            #item_list[5] = result[5].strftime("%b %d %Y, %H:%M")
-            item_list[5] = result[5].strftime("%b %d %Y")
-        output.append(item_list)
-    return (output)
+    return(results)

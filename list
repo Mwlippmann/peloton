@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 from prettytable import PrettyTable
-from pelotondatabase import get_ride_output,get_user_id,get_following
+from pelotondatabase import get_ride_output,get_my_user_id,get_following
 
 x = PrettyTable()
 x.field_names = ['start time','name','duration','total work','title','original air time']
-for ride in get_ride_output(get_user_id()):
-    x.add_row(ride)
+for ride in get_ride_output(get_my_user_id()):
+    item_list = list(ride)
+    item_list[0] = ride[0].strftime("%b %d %Y")
+    item_list[2] = '%s minutes' % str(round(ride[2] / 60))
+    item_list[3] = '%s kj' % str(round(ride[3] / 1000))
+    if len(item_list) == 6 and item_list[5] is not None:
+        item_list[5] = ride[5].strftime("%b %d %Y")
+    x.add_row(item_list)
 print(x)
 
 x = PrettyTable()
 x.field_names = ['username','id']
-for user in get_following(get_user_id()):
+for user in get_following(get_my_user_id()):
     x.add_row(user)
 print(x)
