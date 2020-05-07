@@ -43,7 +43,8 @@ data = s.get(api_url + 'user/' + my_id + '/workouts?limit=2000')
 parsed = json.loads(data.content.decode('UTF-8'))
 workouts = parsed['data']
 filtered_workouts = []
-# here again we filter that came back from api, and insert it into the db.
+# here again we filter what came back from the api call
+# and insert it into the db.
 for workout in workouts:
     filtered_workout = filter_data(workout, workout_filter)
     filtered_workouts.append(filtered_workout)
