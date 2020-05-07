@@ -3,6 +3,7 @@ from sqlalchemy import *
 metadata = MetaData()
 engine = create_engine('sqlite:///data/pelotondb.sqlite')
 
+
 def create_database(data=None):
     # Creates or opens a file called mydb with a SQLite3 DB
     user = Table(
@@ -60,7 +61,9 @@ def create_database(data=None):
         Column('v1_referrals_made', Integer()),
         Column('weight', Float()),
     )
-    workout = Table('workout', metadata,
+    workout = Table(
+        'workout',
+        metadata,
         Column('created', DateTime()),
         Column('created_at', DateTime()),
         Column('device_time_created_at', DateTime()),
@@ -88,7 +91,9 @@ def create_database(data=None):
         Column('user_id', String(255), ForeignKey("user.id"), nullable=False),
         Column('workout_type', String(255)),
     )
-    following = Table('following', metadata,
+    following = Table(
+        'following',
+        metadata,
         Column('authed_user_follows', Boolean()),
         Column('category', String(255)),
         Column('id', String(255), primary_key=True),
@@ -101,7 +106,9 @@ def create_database(data=None):
         Column('user_id', String(255), ForeignKey("user.id"), nullable=False),
         Column('username', String(255)),
     )
-    ride = Table('ride', metadata,
+    ride = Table(
+        'ride',
+        metadata,
         Column('content_format', String(255)),
         Column('content_provider', String(255)),
         Column('description', String(255)),
@@ -117,7 +124,10 @@ def create_database(data=None):
         Column('has_pedaling_metrics', Boolean()),
         Column('home_peloton_id', String(255)),
         Column('id', String(255), primary_key=True),
-        Column('workout_id', String(255), ForeignKey("workout.id"), nullable=False),
+        Column('workout_id',
+               String(255),
+               ForeignKey("workout.id"),
+               nullable=False),
         Column('image_url', String(255)),
         Column('instructor_id', String(255)),
         Column('is_archived', Boolean()),
@@ -154,6 +164,7 @@ def create_database(data=None):
     connection = engine.connect()
     metadata.create_all(engine)
 
+
 def insert_user(data):
     table_names = inspect(engine).get_table_names()
     user_id = data['id']
@@ -166,12 +177,12 @@ def insert_user(data):
         user = Table('user', metadata, autoload=True, autoload_with=engine)
         stmt = select([user]).where(user.columns.id == user_id)
         result = connection.execute(stmt).fetchall()
-        if len(result)>0:
+        if len(result) > 0:
             print('User with id %s already exists in the database.' % user_id)
         else:
             stmt = insert(user).values(**data)
             result_proxy = connection.execute(stmt)
-    return(user_id)
+    return (user_id)
 
 
 def get_user_id():
@@ -181,15 +192,15 @@ def get_user_id():
     '''
     table_names = inspect(engine).get_table_names()
     if 'user' not in table_names:
-        return(False)
+        return (False)
     else:
         connection = engine.connect()
         user = Table('user', metadata, autoload=True, autoload_with=engine)
         stmt = select([user]).where(user.columns.is_me == True)
         result = connection.execute(stmt).fetchall()
-        if len(result)>0:
+        if len(result) > 0:
             user_id = result[0].id
-            return(user_id)
+            return (user_id)
         else:
             return False
 
@@ -212,7 +223,10 @@ def insert_following(values_list):
     following_count = len(values_list)
     user_id = values_list[0]['user_id']
     connection = engine.connect()
-    following = Table('following', metadata, autoload=True, autoload_with=engine)
+    following = Table('following',
+                      metadata,
+                      autoload=True,
+                      autoload_with=engine)
     stmt = select([following]).where(following.columns.user_id == user_id)
     result = connection.execute(stmt).fetchall()
     if len(result) == following_count:
@@ -230,7 +244,7 @@ def get_workoutids(user_id):
     results = connection.execute(stmt).fetchall()
     for result in results:
         workout_ids.append(result.id)
-    return(workout_ids)
+    return (workout_ids)
 
 
 def update_workout(values_list):
@@ -260,12 +274,15 @@ def upsert_rides(values_list):
 def get_following(user_id):
     connection = engine.connect()
     following_data = []
-    following = Table('following', metadata, autoload=True, autoload_with=engine)
+    following = Table('following',
+                      metadata,
+                      autoload=True,
+                      autoload_with=engine)
     stmt = select([following]).where(following.columns.user_id == user_id)
     results = connection.execute(stmt).fetchall()
     for result in results:
         following_data.append([result.username, result.id])
-    return(following_data)
+    return (following_data)
 
 
 def get_ride_output(user_id):
@@ -278,18 +295,18 @@ def get_ride_output(user_id):
         rides.columns.title, rides.columns.original_air_time
     ]
     stmt = select(columns)
-    stmt = stmt.select_from(workouts.join(rides)).order_by(asc(workouts.columns.total_work)).order_by(asc(rides.columns.duration))
+    stmt = stmt.select_from(workouts.join(rides)).order_by(
+        asc(workouts.columns.total_work)).order_by(asc(rides.columns.duration))
     results = connection.execute(stmt).fetchall()
     output = []
     for result in results:
         item_list = list(result)
         #item_list[0] = result[0].strftime("%b %d %Y, %H:%M")
         item_list[0] = result[0].strftime("%b %d %Y")
-        item_list[2] = '%s minutes' % str(round(result[2]/60))
-        item_list[3] = '%s kj' % str(round(result[3]/1000))
-        if len(item_list)==6 and item_list[5] is not None:
+        item_list[2] = '%s minutes' % str(round(result[2] / 60))
+        item_list[3] = '%s kj' % str(round(result[3] / 1000))
+        if len(item_list) == 6 and item_list[5] is not None:
             #item_list[5] = result[5].strftime("%b %d %Y, %H:%M")
             item_list[5] = result[5].strftime("%b %d %Y")
         output.append(item_list)
-    return(output)
-
+    return (output)
