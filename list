@@ -6,11 +6,11 @@ x = PrettyTable()
 x.field_names = ['start time','name','duration','total work','title','original air time']
 for ride in get_ride_output(get_my_user_id()):
     item_list = list(ride)
-    item_list[0] = ride[0].strftime("%b %d %Y")
+    item_list[0] = ride[0].strftime("%m/%d/%y @ %I:%M %p")
     item_list[2] = '%s minutes' % str(round(ride[2] / 60))
     item_list[3] = '%s kj' % str(round(ride[3] / 1000))
     if len(item_list) == 6 and item_list[5] is not None:
-        item_list[5] = ride[5].strftime("%b %d %Y")
+        item_list[5] = ride[5].strftime("%m/%d/%y @ %I:%M %p")
     x.add_row(item_list)
 print(x)
 

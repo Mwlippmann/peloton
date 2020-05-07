@@ -1,13 +1,20 @@
 from datetime import datetime
+import pytz
 
 
 def filter_data(input_data, input_filter):
     output = {}
+    timezone = False
+    if 'timezone' in input_data:
+        timezone = input_data['timezone'] 
     for item, value in input_data.items():
         if item in input_filter['items']:
             output[item] = value
         elif item in input_filter['dates']:
-            output[item] = datetime.utcfromtimestamp(value)
+            if timezone:
+                output[item] = datetime.fromtimestamp(value,pytz.timezone(timezone))
+            else:
+                output[item] = datetime.utcfromtimestamp(value)
     return (output)
 
 
